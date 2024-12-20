@@ -4,3 +4,6 @@ plugins {
     id("publish-conventions")
 }
 
+dependencies {
+    testImplementation(project(":abakt-test"))
+}

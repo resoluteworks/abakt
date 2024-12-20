@@ -1,34 +1,19 @@
 plugins {
-    `maven-publish`
-    kotlin("jvm")
     id("signing")
-    id("org.jetbrains.dokka")
-}
-
-java {
-    withJavadocJar()
-    withSourcesJar()
+    `maven-publish`
+    id("com.gradleup.nmcp")
 }
 
 publishing {
-    val publishGit = "resoluteworks/klees"
+    val publishGit = "resoluteworks/abakt"
 
     repositories {
         mavenLocal()
-        if (project.properties["publishToMavenCentral"] == "true") {
-            maven {
-                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                credentials {
-                    username = System.getenv("NEXUS_USERNAME")
-                    password = System.getenv("NEXUS_PASSWORD")
-                }
-            }
-        }
     }
 
     publications {
         create<MavenPublication>("mavenJava") {
-            from(components["java"])
+            from(components[project.extra.properties["publishComponent"]?.toString() ?: "java"])
             pom {
                 name = project.name
                 description = "${project.properties["publishDescription"]}"
@@ -57,4 +42,12 @@ publishing {
 
 signing {
     sign(publishing.publications["mavenJava"])
+}
+
+nmcp {
+    publish("mavenJava") {
+        username = System.getenv("SONATYPE_PUBLISH_USERNAME")
+        password = System.getenv("SONATYPE_PUBLISH_PASSWORD")
+        publicationType = "AUTOMATIC"
+    }
 }

@@ -11,7 +11,7 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5-jvm:${kotestVersion}")
 
     testImplementation("io.mockk:mockk:${mockkVersion}")
-    testImplementation("ch.qos.logback:logback-classic:1.4.11")
+    testImplementation("ch.qos.logback:logback-classic:1.5.6")
 }
 
 tasks.withType<Test> {
@@ -30,11 +30,5 @@ tasks.jacocoTestReport {
 }
 
 coverallsJacoco {
-    reportPath = "klees-core/build/reports/jacoco/test/jacocoTestReport.xml"
+    reportPath = "abakt-core/build/reports/jacoco/test/jacocoTestReport.xml"
 }
-
-//tasks.coverallsJacoco.dependsOn(jacocoTestReport)
-//
-//tasks.withType<PublishToMavenRepository> {
-//    dependsOn("jacocoTestReport")
-//}
