@@ -5,7 +5,9 @@
 Abakt is a Kotlin (JVM) framework for implementing attribute-based access control (ABAC) policies
 using a typesafe DSL and expressive constructs.
 
-[API Docs](https://resoluteworks.github.io/abakt/dokka/abakt-core/abakt.core/)
+[Core API Docs](https://resoluteworks.github.io/abakt/dokka/abakt-core/abakt.core/)
+
+[Test library API Docs](https://resoluteworks.github.io/abakt/dokka/abakt-test/abakt.test/)
 
 ## Dependency
 ```kotlin
