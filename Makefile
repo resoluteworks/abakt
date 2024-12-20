@@ -20,7 +20,7 @@ publish:
 publish-local:
 	./gradlew publish
 
-release: test publish-local
+release: test publish-local publish
 	@echo $(abaktVersion)
 	git tag "v$(abaktVersion)" -m "Release v$(abaktVersion)"
 	git push --tags --force
