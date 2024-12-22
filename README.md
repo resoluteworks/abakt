@@ -129,3 +129,6 @@ policy.withResource(Folder("owner")) {
 Abakt borrows principles and approaches from [Cerbos](https://www.cerbos.dev/), which is a great
 authorization platform. However, our framework doesn't (cannot) stand as an alternative in the same space. Abakt is not an authorization platform, but an in-memory
 authorization framework for Kotlin/JVM.
+
+## License
+[Apache 2.0 License](LICENSE)
