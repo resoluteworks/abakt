@@ -11,7 +11,7 @@ repositories {
 }
 
 val abaktVersion: String by project
-group = "io.resoluteworks"
+group = "works.resolute"
 version = abaktVersion
 
 kotlin {

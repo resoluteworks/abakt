@@ -11,7 +11,7 @@ using a typesafe DSL and expressive constructs.
 
 ## Dependency
 ```kotlin
-implementation("io.resoluteworks:abakt-core:${abaktVersion}")
+implementation("works.resolute:abakt-core:${abaktVersion}")
 ```
 
 ## Quick start
@@ -88,7 +88,7 @@ the rules for an individual resource policy, or an entire authorization policy.
 
 #### Dependency
 ```kotlin
-implementation("io.resoluteworks:abakt-test:${abaktVersion}")
+implementation("works.resolute:abakt-test:${abaktVersion}")
 ```
 
 #### Testing resource policies

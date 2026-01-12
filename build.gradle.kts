@@ -3,7 +3,7 @@ plugins {
     id("com.gradleup.nmcp")
 }
 
-group = "io.resoluteworks"
+group = "works.resolute"
 
 repositories {
     mavenCentral()
