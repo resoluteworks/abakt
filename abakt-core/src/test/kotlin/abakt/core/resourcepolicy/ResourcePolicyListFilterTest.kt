@@ -1,9 +1,10 @@
 package abakt.core.resourcepolicy
 
+import abakt.core.PermissionDeniedException
 import abakt.core.ResourceAction
 import abakt.core.resourcePolicy
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 
 class ResourcePolicyListFilterTest : StringSpec({
@@ -23,7 +24,7 @@ class ResourcePolicyListFilterTest : StringSpec({
         policy.filterFor<String>(User("u2", "org2"), list) shouldBe "ownerOrg=org2"
     }
 
-    "listFilter returns null when the producer denies" {
+    "filterFor throws PermissionDeniedException when the producer denies (returns null)" {
         data class User(val id: String, val canList: Boolean)
         data class File(val id: String)
 
@@ -33,10 +34,12 @@ class ResourcePolicyListFilterTest : StringSpec({
         }
 
         policy.filterFor<String>(User("u1", true), list) shouldBe "all"
-        policy.filterFor<String>(User("u2", false), list).shouldBeNull()
+        shouldThrow<PermissionDeniedException> {
+            policy.filterFor<String>(User("u2", false), list)
+        }
     }
 
-    "filterFor returns null when no list filter is declared for the action" {
+    "filterFor throws PermissionDeniedException when no list filter is declared for the action" {
         data class User(val id: String)
         data class File(val id: String)
 
@@ -45,7 +48,9 @@ class ResourcePolicyListFilterTest : StringSpec({
             // intentionally no listFilter
         }
 
-        policy.filterFor<String>(User("u1"), list).shouldBeNull()
+        shouldThrow<PermissionDeniedException> {
+            policy.filterFor<String>(User("u1"), list)
+        }
     }
 
     "later listFilter for the same action replaces the previous one" {

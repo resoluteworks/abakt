@@ -65,18 +65,22 @@ class AuthorizationPolicy<Principal : Any> {
 
     /**
      * Returns the filter declared via [ResourcePolicy.listFilter] for the given resource type
-     * and [action], or `null` if the principal is denied or no list filter has been declared.
+     * and [action].
+     *
+     * Default-deny: throws [PermissionDeniedException] when no list filter is declared for the
+     * action, or when the registered producer returns `null`.
      *
      * @param resourceClass The resource type whose list filter to look up.
      * @param principal The principal for whom the filter is being produced.
      * @param action The action the filter applies to.
      * @throws IllegalArgumentException if no policy is registered for [resourceClass].
+     * @throws PermissionDeniedException if the principal is denied.
      */
     fun <Resource : Any, Filter : Any> filterFor(
         resourceClass: KClass<Resource>,
         principal: Principal,
         action: ResourceAction<Resource>
-    ): Filter? {
+    ): Filter {
         @Suppress("UNCHECKED_CAST")
         val resourcePolicy = resourcePolicies[resourceClass]
             ?.let { it as ResourcePolicy<Principal, Resource> }
@@ -90,7 +94,7 @@ class AuthorizationPolicy<Principal : Any> {
     inline fun <reified Resource : Any, Filter : Any> filterFor(
         principal: Principal,
         action: ResourceAction<Resource>
-    ): Filter? = filterFor(Resource::class, principal, action)
+    ): Filter = filterFor(Resource::class, principal, action)
 
     /**
      * Utility for defining a block of permission checks.

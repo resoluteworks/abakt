@@ -106,12 +106,23 @@ class ResourcePolicy<Principal : Any, Resource : Any> {
     }
 
     /**
-     * Returns the filter declared via [listFilter] for the given [principal] and [action], or
-     * `null` if the principal is denied or no list filter has been declared for the action.
+     * Returns the filter declared via [listFilter] for the given [principal] and [action].
+     *
+     * Default-deny: this method throws [PermissionDeniedException] when no list filter is declared
+     * for the action, or when the registered producer returns `null` (the producer's signal that
+     * the principal is not allowed to list under this action).
+     *
+     * @throws PermissionDeniedException if the principal is denied.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <Filter : Any> filterFor(principal: Principal, action: ResourceAction<Resource>): Filter? =
-        listFilters[action]?.invoke(ListFilterContext(principal)) as Filter?
+    @Throws(PermissionDeniedException::class)
+    fun <Filter : Any> filterFor(principal: Principal, action: ResourceAction<Resource>): Filter {
+        val producer = listFilters[action]
+            ?: throw PermissionDeniedException("No list filter declared for action '${action.action}'")
+        val result = producer.invoke(ListFilterContext(principal))
+            ?: throw PermissionDeniedException("List filter for action '${action.action}' denied")
+        return result as Filter
+    }
 
     /**
      * Returns a boolean indicating whether the [principal] is allowed to perform all the specified

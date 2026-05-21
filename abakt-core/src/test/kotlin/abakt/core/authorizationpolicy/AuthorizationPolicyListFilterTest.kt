@@ -1,10 +1,11 @@
 package abakt.core.authorizationpolicy
 
+import abakt.core.PermissionDeniedException
 import abakt.core.ResourceAction
 import abakt.core.authorizationPolicy
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.throwables.shouldThrowWithMessage
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 
 class AuthorizationPolicyListFilterTest : StringSpec({
@@ -19,7 +20,7 @@ class AuthorizationPolicyListFilterTest : StringSpec({
         policy.filterFor<File, String>(User("u1", "org1"), File.list) shouldBe "orgId=org1"
     }
 
-    "filterFor returns null when the producer denies" {
+    "filterFor throws PermissionDeniedException when the producer denies (returns null)" {
         val policy = authorizationPolicy<User> {
             resource<File> {
                 listFilter(File.list) { if (p.organisationId == "org1") "ok" else null }
@@ -27,17 +28,21 @@ class AuthorizationPolicyListFilterTest : StringSpec({
         }
 
         policy.filterFor<File, String>(User("u1", "org1"), File.list) shouldBe "ok"
-        policy.filterFor<File, String>(User("u2", "org2"), File.list).shouldBeNull()
+        shouldThrow<PermissionDeniedException> {
+            policy.filterFor<File, String>(User("u2", "org2"), File.list)
+        }
     }
 
-    "filterFor returns null when no list filter is declared for the action" {
+    "filterFor throws PermissionDeniedException when no list filter is declared for the action" {
         val policy = authorizationPolicy<User> {
             resource<File> {
                 // no listFilter
             }
         }
 
-        policy.filterFor<File, String>(User("u1", "org1"), File.list).shouldBeNull()
+        shouldThrow<PermissionDeniedException> {
+            policy.filterFor<File, String>(User("u1", "org1"), File.list)
+        }
     }
 
     "filterFor throws when no policy is registered for the resource type" {
