@@ -43,11 +43,3 @@ publishing {
 signing {
     sign(publishing.publications["mavenJava"])
 }
-
-nmcp {
-    publish("mavenJava") {
-        username = System.getenv("SONATYPE_PUBLISH_USERNAME")
-        password = System.getenv("SONATYPE_PUBLISH_PASSWORD")
-        publicationType = "AUTOMATIC"
-    }
-}

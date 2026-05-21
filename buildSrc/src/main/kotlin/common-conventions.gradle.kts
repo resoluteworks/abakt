@@ -26,12 +26,12 @@ java {
 dependencies {
     val kotlinVersion: String by project
 
-    implementation("io.github.oshai:kotlin-logging-jvm:6.0.9")
-    implementation("org.slf4j:slf4j-api:2.0.13")
+    implementation("io.github.oshai:kotlin-logging-jvm:8.0.03")
+    implementation("org.slf4j:slf4j-api:2.0.18")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 }
 
 tasks.dokkaHtml {

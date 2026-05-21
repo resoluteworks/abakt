@@ -1,17 +1,46 @@
 # Abakt
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/resoluteworks/abakt)
-![Coveralls](https://img.shields.io/coverallsCoverage/github/resoluteworks/abakt)
 
-Abakt is a Kotlin (JVM) framework for implementing attribute-based access control (ABAC) policies
-using a typesafe DSL and expressive constructs.
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/resoluteworks/abakt)](https://github.com/resoluteworks/abakt/releases)
+[![Coveralls](https://img.shields.io/coverallsCoverage/github/resoluteworks/abakt)](https://coveralls.io/github/resoluteworks/abakt)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-[Core API Docs](https://resoluteworks.github.io/abakt/dokka/abakt-core/abakt.core/)
+**Abakt** is a Kotlin (JVM) framework for attribute-based access control (ABAC).
+Declare your policies as a type-safe DSL, check them inline, and keep your authorization logic
+out of your business code.
 
-[Test library API Docs](https://resoluteworks.github.io/abakt/dokka/abakt-test/abakt.test/)
-
-## Dependency
 ```kotlin
-implementation("works.resolute:abakt-core:${abaktVersion}")
+authPolicy.check { user can document.write }
+```
+
+## Why Abakt
+
+- **Type-safe DSL** &mdash; principals, resources, and actions are all typed; the compiler catches
+  mistakes before they reach production.
+- **Unintrusive** &mdash; no marker interfaces, no inheritance, no annotations. Your domain types
+  stay your own.
+- **Derived roles** &mdash; express roles that depend on the relationship between principal and
+  resource (e.g. "owner", "member of same org").
+- **List filters** &mdash; turn a policy into a query predicate so you can authorize listing
+  endpoints at the database layer, not after fetching.
+- **Library, not platform** &mdash; in-memory, no servers, no sidecars, no network hops. Drop it
+  into any JVM application.
+- **First-class testing** &mdash; a dedicated [Kotest](https://kotest.io/) module for writing
+  expressive policy tests.
+
+## Documentation
+
+- [Core API](https://resoluteworks.github.io/abakt/dokka/abakt-core/abakt.core/)
+- [Test utilities API](https://resoluteworks.github.io/abakt/dokka/abakt-test/abakt.test/)
+
+## Installation
+
+```kotlin
+dependencies {
+    implementation("works.resolute:abakt-core:${abaktVersion}")
+
+    // For policy testing with Kotest
+    testImplementation("works.resolute:abakt-test:${abaktVersion}")
+}
 ```
 
 ## Quick start
@@ -67,68 +96,97 @@ if (authPolicy.allowed(principal, document, write)) {
 }
 ```
 
-## Motivation and guiding principles
-The main motivation for this framework is to provide the ability to define and validate ABAC
-permissions as easily as possible, by using type-safe constructs and a concise API.
+## List filters
 
-At the same time, we wanted something that's unintrusive and flexible. This is why we don't have
-marker interfaces like `Principal` or `Resource` and we've opted for generics instead.
+A list filter turns a policy into a predicate the caller can apply *before* fetching data. This
+matters because per-row authorization doesn't scale: paginating, sorting, and counting only
+work correctly when the database itself returns just the rows the principal is allowed to see.
 
-This allows the client code to bring its own representation for these concepts, and for the
-framework to act as a drop-in, or an extension.
+The filter type is opaque to Abakt &mdash; the calling code decides what it produces (a MongoDB
+`Bson`, a SQL `WHERE` clause, a JPA `Specification`, a custom AST, anything).
 
-For the same reasons, the core library only provides the basic elements of operating an authorization
-policy: definition and verification. The consumer application can then make its own decisions about
-how these elements are wired (web filters, proxies, explicit calls, etc.).
+```kotlin
+val list = ResourceAction<Document>("list")
+
+val authPolicy = authorizationPolicy<Principal> {
+    resource<Document> {
+        // Existing per-instance rules still apply for check()/allowed()
+        allow(read) { resource.organisationId == principal.organisationId }
+
+        // A filter producer for the "list" action. Returns `null` to deny
+        // listing entirely; otherwise returns the predicate the caller will
+        // hand to its data layer.
+        listFilter(list) {
+            when (principal.role) {
+                "ADMIN" -> Filters.empty()
+                "USER"  -> Filters.eq("organisationId", principal.organisationId)
+                else    -> null
+            }
+        }
+    }
+}
+
+// Resolve the filter at the call site, then pass it to your repository.
+val filter = authPolicy.filterFor<Document, Bson>(principal, list)
+    ?: throw PermissionDeniedException("Listing denied")
+
+documents.find(filter).toList()
+```
 
 ## Testing policies
-A testing framework based on [Kotest](https://kotest.io/) is provided to help with testing
-authentication policies. These utilities allow you to write expressive tests to validate
-the rules for an individual resource policy, or an entire authorization policy.
 
-#### Dependency
+`abakt-test` provides Kotest-friendly utilities for asserting that your rules behave as
+expected, both for an individual resource policy and for a composed authorization policy.
+
+### Resource policy tests
+
 ```kotlin
-implementation("works.resolute:abakt-test:${abaktVersion}")
-```
+val resourcePolicy = resourcePolicy<User, Document> { ... }
 
-#### Testing resource policies
-```kotlin
-val resourcePolicy = resourcePolicy<Document> { ... }
-
-resourcePolicy.shouldAllow(owner, document, ResourceAction("read"))
-resourcePolicy.shouldDeny(otherUser, document, ResourceAction("write"))
+resourcePolicy.shouldAllow(owner, document, read)
+resourcePolicy.shouldDeny(otherUser, document, write)
 
 resourcePolicy.withResource(largeExpense) {
-    managerInFinance shouldBeAllowed actionApprove
-    userInFinance shouldNotBeAllowed actionApprove
+    managerInFinance shouldBeAllowed approve
+    userInFinance   shouldNotBeAllowed approve
 }
 ```
 
-#### Testing authorization policies
-Similar constructs can be used to test authorization policies.
+### Authorization policy tests
+
 ```kotlin
 val policy = authorizationPolicy<User> {
-    resource<Document> {...}
-    resource<Folder> {...}
+    resource<Document> { ... }
+    resource<Folder>   { ... }
 }
 
-policy.shouldAllow(User("owner"), Document("owner"), actionDocumentWrite)
+policy.shouldAllow(User("owner"), Document("owner"), documentWrite)
 
 policy.withPrincipal(User("owner")) {
-    actionFolderRead shouldBeAllowedOn Folder("owner")
-    actionFolderDelete shouldBeAllowedOn Folder("owner")
+    folderRead   shouldBeAllowedOn Folder("owner")
+    folderDelete shouldBeAllowedOn Folder("owner")
 }
 
 policy.withResource(Folder("owner")) {
-    User("otherUser") shouldBeAllowed actionFolderRead
-    User("otherUser") shouldBeDenied actionFolderDelete
+    User("otherUser") shouldBeAllowed folderRead
+    User("otherUser") shouldBeDenied  folderDelete
 }
 ```
 
-## Inspiration
-Abakt borrows principles and approaches from [Cerbos](https://www.cerbos.dev/), which is a great
-authorization platform. However, our framework doesn't (cannot) stand as an alternative in the same space. Abakt is not an authorization platform, but an in-memory
-authorization framework for Kotlin/JVM.
+## Design notes
+
+Abakt is built around a few deliberate choices:
+
+- **No marker interfaces.** Principals and resources are plain generics, so you can layer
+  Abakt onto an existing domain model without changing it.
+- **No wiring opinions.** The library covers policy *definition* and *verification*; how you
+  invoke checks (web filters, interceptors, explicit calls) is up to you.
+- **In-memory only.** Policies are Kotlin code, evaluated in-process. There is no server,
+  no network call, no external schema.
+
+Abakt borrows ideas from [Cerbos](https://www.cerbos.dev/) but is not a replacement for it:
+Cerbos is an authorization *platform*, Abakt is a JVM-embedded *library*.
 
 ## License
-[Apache 2.0 License](LICENSE)
+
+[Apache 2.0](LICENSE)

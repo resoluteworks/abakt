@@ -11,7 +11,7 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5-jvm:${kotestVersion}")
 
     testImplementation("io.mockk:mockk:${mockkVersion}")
-    testImplementation("ch.qos.logback:logback-classic:1.5.6")
+    testImplementation("ch.qos.logback:logback-classic:1.5.32")
 }
 
 tasks.withType<Test> {

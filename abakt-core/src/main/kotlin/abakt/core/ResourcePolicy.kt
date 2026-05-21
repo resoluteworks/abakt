@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 
 private typealias RuleCondition<Principal, Resource> = EvaluationContext<Principal, Resource>.() -> Boolean
 private typealias DerivedRoleCondition<Principal, Resource> = DerivedRoleContext<Principal, Resource>.() -> Boolean
+private typealias ListFilterProducer<Principal> = ListFilterContext<Principal>.() -> Any?
 
 private val log = KotlinLogging.logger {}
 
@@ -14,6 +15,7 @@ class ResourcePolicy<Principal : Any, Resource : Any> {
 
     private val rules = mutableListOf<Rule<Principal, Resource>>()
     private val derivedRolesRules = mutableMapOf<String, DerivedRoleCondition<Principal, Resource>>()
+    private val listFilters = mutableMapOf<ResourceAction<Resource>, ListFilterProducer<Principal>>()
 
     /**
      * Adds a rule to allow the specified actions if the condition is met.
@@ -80,6 +82,36 @@ class ResourcePolicy<Principal : Any, Resource : Any> {
     fun derivedRole(role: String, condition: DerivedRoleCondition<Principal, Resource>) {
         derivedRolesRules[role] = condition
     }
+
+    /**
+     * Declares the filter representing the set of [Resource] instances the principal is allowed
+     * to list under the given [action]. The [producer] returns the filter, or `null` to deny.
+     *
+     * Unlike [allow]/[deny], a list filter is a function of the principal alone — it cannot be
+     * evaluated against a specific [Resource] instance because list authorization happens before
+     * any rows have been fetched.
+     *
+     * The filter type is opaque to abakt; the calling library decides what to use (for example a
+     * MongoDB `Bson` filter or a SQL predicate). Only one filter may be registered per action;
+     * a subsequent call for the same action replaces the previous producer.
+     *
+     * @param action The action the filter applies to (typically a "list" action).
+     * @param producer Returns the filter, or `null` if the principal is denied.
+     */
+    fun <Filter : Any> listFilter(
+        action: ResourceAction<Resource>,
+        producer: ListFilterContext<Principal>.() -> Filter?
+    ) {
+        listFilters[action] = producer
+    }
+
+    /**
+     * Returns the filter declared via [listFilter] for the given [principal] and [action], or
+     * `null` if the principal is denied or no list filter has been declared for the action.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <Filter : Any> filterFor(principal: Principal, action: ResourceAction<Resource>): Filter? =
+        listFilters[action]?.invoke(ListFilterContext(principal)) as Filter?
 
     /**
      * Returns a boolean indicating whether the [principal] is allowed to perform all the specified

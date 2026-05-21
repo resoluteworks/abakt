@@ -15,7 +15,7 @@ test:
 	./gradlew coverallsJacoco
 
 publish:
-	./gradlew publishAllPublicationsToCentralPortal
+	./gradlew publishAggregationToCentralPortal
 
 publish-local:
 	./gradlew publish
