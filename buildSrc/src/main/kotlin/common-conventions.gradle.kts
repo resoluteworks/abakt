@@ -34,7 +34,14 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 }
 
-tasks.dokkaHtml {
-    outputDirectory.set(layout.projectDirectory.dir("../docs/dokka"))
-    suppressInheritedMembers = true
+jacoco {
+    // The org.jacoco.core jar on the buildSrc classpath is the single JaCoCo pin; its VERSION carries a
+    // build timestamp (0.8.15.2026...) that the published agent and ant artifacts do not.
+    toolVersion = org.jacoco.core.JaCoCo.VERSION.substringBeforeLast(".")
+}
+
+dokka {
+    dokkaPublications.html {
+        suppressInheritedMembers.set(true)
+    }
 }
