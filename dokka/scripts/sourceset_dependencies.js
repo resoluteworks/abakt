@@ -1,1 +1,1 @@
-sourceset_dependencies='{":abakt-test:dokkaHtml/main":[]}'
+sourceset_dependencies = '{":abakt-test/main":[],":abakt-core/main":[]}'
