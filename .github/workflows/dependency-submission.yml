@@ -1,0 +1,37 @@
+name: Dependency submission
+
+# Uploads the resolved Gradle dependency graph so Dependabot alerts cover the dependencies abakt
+# publishes (kotlin-logging, slf4j-api, kotlin-reflect and kotlinx-serialization-json from abakt-core,
+# plus the kotest and mockk artifacts abakt-test ships to its consumers).
+# GitHub cannot read a Gradle build on its own; without this submission the dependency graph holds zero Maven packages.
+#
+# The graph is scoped to runtimeClasspath and excludes buildSrc, so the alerts describe what a consumer of
+# abakt resolves rather than the build's own tooling (Dokka, jacoco, coveralls, the Kotlin Gradle plugin)
+# or the test-only classpath. runtimeClasspath is the tightest scope available: apiElements and
+# runtimeElements are the configurations that are actually published, but they are consumable-only and
+# the action's resolve-all-dependencies task cannot resolve them, so filtering to them submits nothing.
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  dependency-submission:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v6
+        with:
+          dependency-graph-include-configurations: "^runtimeClasspath$"
+          dependency-graph-exclude-projects: ":buildSrc"
