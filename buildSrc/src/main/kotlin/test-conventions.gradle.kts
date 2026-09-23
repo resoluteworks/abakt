@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    val kotestVersion: String by project
-    val mockkVersion: String by project
+    val kotestVersion = providers.gradleProperty("kotestVersion").get()
+    val mockkVersion = providers.gradleProperty("mockkVersion").get()
 
     testImplementation("io.kotest:kotest-assertions-core:${kotestVersion}")
     testImplementation("io.kotest:kotest-property:${kotestVersion}")

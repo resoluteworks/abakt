@@ -4,9 +4,11 @@ plugins {
     id("publish-conventions")
 }
 
+description = "Kotest matchers and utilities for writing tests against abakt authorization policies."
+
 dependencies {
-    val kotestVersion: String by project
-    val mockkVersion: String by project
+    val kotestVersion = providers.gradleProperty("kotestVersion").get()
+    val mockkVersion = providers.gradleProperty("mockkVersion").get()
 
     implementation(project(":abakt-core"))
 

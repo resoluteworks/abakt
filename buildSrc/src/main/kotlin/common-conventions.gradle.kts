@@ -10,7 +10,7 @@ repositories {
     mavenCentral()
 }
 
-val abaktVersion: String by project
+val abaktVersion = providers.gradleProperty("abaktVersion").get()
 group = "works.resolute"
 version = abaktVersion
 
@@ -24,7 +24,7 @@ java {
 }
 
 dependencies {
-    val kotlinVersion: String by project
+    val kotlinVersion = providers.gradleProperty("kotlinVersion").get()
 
     implementation("io.github.oshai:kotlin-logging-jvm:8.0.03")
     implementation("org.slf4j:slf4j-api:2.0.18")

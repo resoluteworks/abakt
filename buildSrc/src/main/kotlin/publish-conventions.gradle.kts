@@ -16,7 +16,7 @@ publishing {
             from(components[project.extra.properties["publishComponent"]?.toString() ?: "java"])
             pom {
                 name = project.name
-                description = "${project.properties["publishDescription"]}"
+                description = provider { project.description ?: error("${project.path} must set description in its build.gradle.kts; it becomes the POM <description>") }
                 url = "https://github.com/${publishGit}"
                 licenses {
                     license {
