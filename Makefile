@@ -1,14 +1,4 @@
-export OP_ACCOUNT := my.1password.com
 include gradle.properties
-
-ifneq (,$(wildcard .env))
-	include .env
-	export
-endif
-
-env:
-	rm -f .env
-	op read "op://Development/resolute-works-open-source/abakt.env.local" > .env
 
 test:
 	./gradlew clean test
